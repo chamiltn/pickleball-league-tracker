@@ -198,28 +198,55 @@
   </section>
 </main>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  getDocs,
+  writeBatch,
+  onSnapshot,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC5TvCijEwaUyYCBwR3acxBN0mIGXzyGHM",
+  authDomain: "pickleball-league-tracker.firebaseapp.com",
+  databaseURL: "https://pickleball-league-tracker-default-rtdb.firebaseio.com",
+  projectId: "pickleball-league-tracker",
+  storageBucket: "pickleball-league-tracker.firebasestorage.app",
+  messagingSenderId: "454243471192",
+  appId: "1:454243471192:web:fe65f5e8e92b519f951f2d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const matchesCol = collection(db, "matches");
+
 const ADMIN_PASSWORD = "pickleball2026";
 const adminKey = "lsfPickleballAdminUnlocked";
 let isAdmin = sessionStorage.getItem(adminKey) === "true";
+let matches = [];
+
 function setAdminMode(value) {
   isAdmin = value;
   sessionStorage.setItem(adminKey, value ? "true" : "false");
   document.body.classList.toggle("admin", value);
   const status = document.getElementById("adminStatus");
-  if (status) status.textContent = value ? "Admin access granted — you can add/edit scores." : "Viewing only";
+  if (status) status.textContent = value ? "Admin access granted — scores save online for everyone." : "Viewing only";
 }
 
 const seedMatches = [{"date":"2026-06-01","p1":"Brandon F","p2":"Giacomo C","p3":"Sarah B","p4":"Coach Mitch","score1":11,"score2":3},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Ahmaad L","p4":"Sophia M","score1":11,"score2":3},{"date":"2026-06-01","p1":"Devin D","p2":"Brandon F","p3":"Giacomo C","p4":"Jordanna L","score1":11,"score2":3},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Sophia M","p3":"Ahmaad L","p4":"Sarah B","score1":11,"score2":3},{"date":"2026-06-01","p1":"Brandon F","p2":"Jordanna L","p3":"Devin D","p4":"Giacomo C","score1":11,"score2":2},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Ahmaad L","p3":"Sophia M","p4":"Sarah B","score1":11,"score2":7},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Brandon F","p4":"Giacomo C","score1":11,"score2":9},{"date":"2026-06-01","p1":"Ahmaad L","p2":"Brandon F","p3":"Giacomo C","p4":"Sophia M","score1":11,"score2":7},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Sarah B","p4":"Coach Mitch","score1":11,"score2":8},{"date":"2026-06-01","p1":"Brandon F","p2":"Sophia M","p3":"Giacomo C","p4":"Ahmaad L","score1":11,"score2":1},{"date":"2026-06-01","p1":"Devin D","p2":"Giacomo C","p3":"Ahmaad L","p4":"Sophia M","score1":11,"score2":5},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Jordanna L","p3":"Brandon F","p4":"Sarah B","score1":11,"score2":4},{"date":"2026-06-01","p1":"Devin D","p2":"Sophia M","p3":"Giacomo C","p4":"Ahmaad L","score1":11,"score2":7},{"date":"2026-06-06","p1":"Brian A","p2":"Srisupen A","p3":"Ann Z","p4":"Coach Chase","score1":13,"score2":11},{"date":"2026-06-06","p1":"Brian A","p2":"Ann Z","p3":"Coach Chase","p4":"Srisupen A","score1":12,"score2":10},{"date":"2026-06-06","p1":"Coach Chase","p2":"Ann Z","p3":"Brian A","p4":"Srisupen A","score1":12,"score2":10},{"date":"2026-06-06","p1":"Coach Chase","p2":"Srisupen A","p3":"Ann Z","p4":"Brian A","score1":7,"score2":1}];
-const storeKey = "lsfPickleballLeagueMatchesV1";
-let matches = loadMatches();
 
-function loadMatches() {
-  const saved = localStorage.getItem(storeKey);
-  if (!saved) return seedMatches.map((m, idx) => ({...m, id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+idx)}));
-  try { return JSON.parse(saved); } catch { return seedMatches; }
+function createId() {
+  return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random());
 }
-function saveMatches() { localStorage.setItem(storeKey, JSON.stringify(matches)); }
+function withIds(list) {
+  return list.map((m, idx) => ({...m, id: m.id || `seed-${idx}`}));
+}
 function fmtDate(dateString) {
   const [y,m,d] = dateString.split('-').map(Number);
   return new Date(y, m-1, d).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
@@ -281,7 +308,7 @@ function renderKpis() {
     <div class="kpi"><div class="label">Matches Entered</div><div class="value">${matches.length}</div></div>
     <div class="kpi"><div class="label">League Dates</div><div class="value">${days.length}</div></div>
     <div class="kpi"><div class="label">Players</div><div class="value">${standings.length}</div></div>
-    <div class="kpi"><div class="label">Overall Leader</div><div class="value" style="font-size:20px">${top ? top.name : '—'}</div></div>`;
+    <div class="kpi"><div class="label">Overall Leader</div><div class="value" style="font-size:20px">${top ? '🐐 ' + top.name : '—'}</div></div>`;
 }
 function renderStandings() {
   const standings = calculateStandings();
@@ -302,16 +329,43 @@ function renderMatches() {
     <tbody>${sorted.map(m => {
       const s1 = Number(m.score1), s2 = Number(m.score2);
       const winner = s1 === s2 ? 'Tie' : s1 > s2 ? `${m.p1} / ${m.p2}` : `${m.p3} / ${m.p4}`;
-      return `<tr><td>${fmtDate(m.date)}</td><td>${m.p1} / ${m.p2}</td><td>${m.p3} / ${m.p4}</td><td><strong>${s1}-${s2}</strong></td><td>${winner}</td><td>${isAdmin ? `<button class="danger" onclick="deleteMatch('${m.id}')">Delete</button>` : `<span class="muted">View only</span>`}</td></tr>`;
+      return `<tr><td>${fmtDate(m.date)}</td><td>${m.p1} / ${m.p2}</td><td>${m.p3} / ${m.p4}</td><td><strong>${s1}-${s2}</strong></td><td>${winner}</td><td>${isAdmin ? `<button class="danger" onclick="window.deleteMatch('${m.id}')">Delete</button>` : `<span class="muted">View only</span>`}</td></tr>`;
     }).join('')}</tbody>`;
 }
 function renderPlayers() {
   document.getElementById('players').innerHTML = players().map(p => `<option value="${p.replaceAll('"','&quot;')}"></option>`).join('');
 }
-function renderAll() { saveMatches(); renderKpis(); renderPlayers(); renderDaily(); renderStandings(); renderMatches(); }
-function deleteMatch(id) { if (!isAdmin) return alert('Please log in as admin first.'); matches = matches.filter(m => m.id !== id); renderAll(); }
+function renderAll() { renderKpis(); renderPlayers(); renderDaily(); renderStandings(); renderMatches(); }
+
+async function saveMatch(match) {
+  await setDoc(doc(matchesCol, match.id), {...match, updatedAt: serverTimestamp()});
+}
+window.deleteMatch = async function(id) {
+  if (!isAdmin) return alert('Please log in as admin first.');
+  if (!confirm('Delete this match?')) return;
+  await deleteDoc(doc(matchesCol, id));
+};
+async function replaceAllMatches(newMatches) {
+  const existing = await getDocs(matchesCol);
+  let batch = writeBatch(db);
+  let opCount = 0;
+  existing.forEach(d => { batch.delete(d.ref); opCount++; });
+  for (const m of newMatches) {
+    const match = {...m, id: m.id || createId()};
+    batch.set(doc(matchesCol, match.id), {...match, updatedAt: serverTimestamp()});
+    opCount++;
+    if (opCount >= 450) { await batch.commit(); batch = writeBatch(db); opCount = 0; }
+  }
+  if (opCount > 0) await batch.commit();
+}
+async function seedIfEmpty() {
+  const snap = await getDocs(matchesCol);
+  if (snap.empty) await replaceAllMatches(withIds(seedMatches));
+}
 
 setAdminMode(isAdmin);
+document.getElementById('date').valueAsDate = new Date();
+document.querySelector('.mini').textContent = 'Admin tip: entries now save online through Firebase. Everyone will see updated standings from the same GitHub Pages link.';
 document.getElementById('loginBtn').addEventListener('click', () => {
   const entered = document.getElementById('adminPassword').value;
   if (entered === ADMIN_PASSWORD) {
@@ -323,12 +377,11 @@ document.getElementById('loginBtn').addEventListener('click', () => {
   }
 });
 document.getElementById('logoutBtn').addEventListener('click', () => { setAdminMode(false); renderMatches(); });
-document.getElementById('date').valueAsDate = new Date();
-document.getElementById('matchForm').addEventListener('submit', (e) => {
+document.getElementById('matchForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!isAdmin) return alert('Please log in as admin first.');
   const m = {
-    id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+    id: createId(),
     date: document.getElementById('date').value,
     p1: cleanName(document.getElementById('p1').value),
     p2: cleanName(document.getElementById('p2').value),
@@ -337,16 +390,12 @@ document.getElementById('matchForm').addEventListener('submit', (e) => {
     score1: Number(document.getElementById('score1').value),
     score2: Number(document.getElementById('score2').value)
   };
-  matches.push(m);
+  await saveMatch(m);
   ['p1','p2','p3','p4','score1','score2'].forEach(id => document.getElementById(id).value = '');
-  renderAll();
 });
-document.getElementById('resetBtn').addEventListener('click', () => {
+document.getElementById('resetBtn').addEventListener('click', async () => {
   if (!isAdmin) return alert('Please log in as admin first.');
-  if (confirm('Reset all entries back to the original uploaded spreadsheet data?')) {
-    matches = seedMatches.map((m, idx) => ({...m, id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+idx)}));
-    renderAll();
-  }
+  if (confirm('Reset all entries back to the original uploaded spreadsheet data?')) await replaceAllMatches(withIds(seedMatches));
 });
 document.getElementById('exportBtn').addEventListener('click', () => {
   if (!isAdmin) return alert('Please log in as admin first.');
@@ -363,11 +412,20 @@ document.getElementById('importFile').addEventListener('change', async (e) => {
   try {
     const imported = JSON.parse(await file.text());
     if (!Array.isArray(imported)) throw new Error('Backup must be a list of matches.');
-    matches = imported.map((m, idx) => ({...m, id: m.id || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()+idx))}));
-    renderAll();
+    await replaceAllMatches(imported.map((m) => ({...m, id: m.id || createId()})));
   } catch (err) { alert('Could not import backup: ' + err.message); }
 });
+
 renderAll();
+seedIfEmpty().then(() => {
+  onSnapshot(matchesCol, (snapshot) => {
+    matches = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+    renderAll();
+  }, (error) => {
+    console.error(error);
+    alert('Firebase connection error: ' + error.message);
+  });
+});
 </script>
 </body>
 </html>
