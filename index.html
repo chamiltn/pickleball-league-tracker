@@ -13,11 +13,9 @@
       --line: #343434;
       --accent: #ff7a00;
       --accent-dark: #cc6200;
-      --danger: #ff4d4d;
       --gold: rgba(255, 122, 0, 0.22);
       --shadow: 0 14px 34px rgba(0, 0, 0, 0.38);
     }
-
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -48,213 +46,59 @@
     .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
     .kpi { background: #101010; border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
     .kpi .label { color: var(--muted); font-size: 13px; margin-bottom: 6px; }
-    .kpi .value { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; }
+    .kpi .value { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--accent); }
     h2 { margin: 0 0 14px; font-size: 21px; letter-spacing: -0.02em; }
-    label { display: block; font-size: 13px; font-weight: 700; color: #f8fafc; margin-bottom: 5px; }
-    input, select, button {
-      font: inherit;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      padding: 10px 11px;
-      width: 100%;
-      background: #101010;
-    }
-    input:focus, select:focus { outline: 2px solid rgba(31,122,77,.22); border-color: var(--accent); }
-    .form-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; align-items: end; }
-    .form-grid .wide { grid-column: span 2; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-    button {
-      cursor: pointer;
-      border: none;
-      font-weight: 800;
-      background: var(--accent);
-      color: #111;
-      width: auto;
-      padding: 11px 15px;
-    }
-    button:hover { background: var(--accent-dark); }
-    button.secondary { background: #2a2a2a; color: #f8fafc; }
-    button.secondary:hover { background: #3a3a3a; }
-    button.danger { background: #3a1414; color: #ff9b9b; }
-    button.danger:hover { background: #552020; }
     .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
     table { width: 100%; border-collapse: collapse; background: #101010; min-width: 760px; }
-    th, td { padding: 10px 11px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; }
+    th, td { padding: 10px 11px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; color: var(--ink); }
     th { background: #222; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #ffb366; position: sticky; top: 0; }
     tr:last-child td { border-bottom: none; }
     .rank { font-weight: 900; }
     .pill { display: inline-block; padding: 4px 8px; border-radius: 999px; background: rgba(255,122,0,.18); color: #ffb366; font-weight: 800; font-size: 12px; }
     .gold { background: var(--gold); }
     .muted { color: var(--muted); }
-    .mini { font-size: 12px; color: var(--muted); margin-top: 8px; }
-    .file-label { display: inline-flex; gap: 8px; align-items: center; cursor: pointer; width: auto; border: none; padding: 0; margin: 0; }
-    .file-label input { display: none; }
-    .admin-only { display: none; }
-    body.admin .admin-only { display: block; }
-    body.admin .admin-only.inline { display: inline-block; }
-    .admin-login { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
-    .admin-login input { max-width: 260px; }
-    .status { font-weight: 800; color: #ffb366; margin-top: 8px; }
+    .note { margin: 0 0 18px; color: var(--muted); }
     @media (max-width: 900px) {
       .span-7, .span-5 { grid-column: span 12; }
       .kpis { grid-template-columns: repeat(2, 1fr); }
-      .form-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 560px) {
-      .kpis, .form-grid { grid-template-columns: 1fr; }
-      .form-grid .wide { grid-column: span 1; }
+      .kpis { grid-template-columns: 1fr; }
     }
-  
-    input, select { color: #f8fafc; background: #0f0f0f; border-color: #3a3a3a; }
-    table { background: #101010; }
-    th, td { color: #f8fafc; }
-    .kpi .value { color: #ff7a00; }
-</style>
+  </style>
 </head>
 <body>
 <header>
   <div class="wrap">
     <h1>LSF Pickleball League Tracker</h1>
-    <p class="subtitle">Add matchups and scores. Daily winners and overall standings update automatically.</p>
+    <p class="subtitle">Daily winners and overall standings update from the published match file.</p>
   </div>
 </header>
 <main class="wrap">
   <section class="kpis" id="kpis"></section>
-
   <section class="grid">
-    <div class="card span-12" id="adminLoginCard">
-      <h2>Admin Access</h2>
-      <p class="muted">Standings are public. Score entry, imports, resets, and delete buttons are admin-only.</p>
-      <div class="admin-login">
-        <div>
-          <label for="adminPassword">Admin Password</label>
-          <input type="password" id="adminPassword" placeholder="Enter password" />
-        </div>
-        <button type="button" id="loginBtn">Log In</button>
-        <button type="button" class="secondary admin-only inline" id="logoutBtn">Log Out</button>
-      </div>
-      <div class="status" id="adminStatus">Viewing only</div>
-    </div>
-
-    <div class="card span-12 admin-only" id="scoreEntryCard">
-      <h2>Add Match</h2>
-      <form id="matchForm">
-        <div class="form-grid">
-          <div>
-            <label for="date">Date</label>
-            <input type="date" id="date" required />
-          </div>
-          <div>
-            <label for="p1">Player 1</label>
-            <input list="players" id="p1" required />
-          </div>
-          <div>
-            <label for="p2">Player 2</label>
-            <input list="players" id="p2" required />
-          </div>
-          <div>
-            <label for="score1">Team 1 Score</label>
-            <input type="number" id="score1" min="0" step="1" required />
-          </div>
-          <div></div>
-          <div>
-            <label for="p3">Player 3</label>
-            <input list="players" id="p3" required />
-          </div>
-          <div>
-            <label for="p4">Player 4</label>
-            <input list="players" id="p4" required />
-          </div>
-          <div>
-            <label for="score2">Team 2 Score</label>
-            <input type="number" id="score2" min="0" step="1" required />
-          </div>
-        </div>
-        <datalist id="players"></datalist>
-        <div class="actions">
-          <button type="submit">Add Match</button>
-          <button type="button" class="secondary" id="exportBtn">Export Backup</button>
-          <label class="file-label"><button type="button" class="secondary" onclick="document.getElementById('importFile').click()">Import Backup</button><input type="file" id="importFile" accept="application/json" /></label>
-          <button type="button" class="danger" id="resetBtn">Reset to Original Sheet Data</button>
-        </div>
-        <p class="mini">Admin tip: entries save automatically in this browser. Use Export Backup before clearing browser history or switching computers.</p>
-      </form>
-    </div>
-
     <div class="card span-5">
       <h2>Winner by Date</h2>
       <div class="table-wrap"><table id="dailyTable"></table></div>
     </div>
-
     <div class="card span-7">
       <h2>Overall Standings</h2>
       <div class="table-wrap"><table id="standingsTable"></table></div>
     </div>
-
     <div class="card span-12">
       <h2>Match Log</h2>
+      <p class="note">This page is view-only. To update standings, replace this file in GitHub with the latest version.</p>
       <div class="table-wrap"><table id="matchTable"></table></div>
     </div>
   </section>
 </main>
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import {
-  getFirestore,
-  collection,
-  doc,
-  setDoc,
-  deleteDoc,
-  getDocs,
-  writeBatch,
-  onSnapshot,
-  serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC5TvCijEwaUyYCBwR3acxBN0mIGXzyGHM",
-  authDomain: "pickleball-league-tracker.firebaseapp.com",
-  databaseURL: "https://pickleball-league-tracker-default-rtdb.firebaseio.com",
-  projectId: "pickleball-league-tracker",
-  storageBucket: "pickleball-league-tracker.firebasestorage.app",
-  messagingSenderId: "454243471192",
-  appId: "1:454243471192:web:fe65f5e8e92b519f951f2d"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const matchesCol = collection(db, "matches");
-
-const ADMIN_PASSWORD = "pickleball2026";
-const adminKey = "lsfPickleballAdminUnlocked";
-let isAdmin = sessionStorage.getItem(adminKey) === "true";
-let matches = [];
-
-function setAdminMode(value) {
-  isAdmin = value;
-  sessionStorage.setItem(adminKey, value ? "true" : "false");
-  document.body.classList.toggle("admin", value);
-  const status = document.getElementById("adminStatus");
-  if (status) status.textContent = value ? "Admin access granted — scores save online for everyone." : "Viewing only";
-}
-
-const seedMatches = [{"date":"2026-06-01","p1":"Brandon F","p2":"Giacomo C","p3":"Sarah B","p4":"Coach Mitch","score1":11,"score2":3},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Ahmaad L","p4":"Sophia M","score1":11,"score2":3},{"date":"2026-06-01","p1":"Devin D","p2":"Brandon F","p3":"Giacomo C","p4":"Jordanna L","score1":11,"score2":3},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Sophia M","p3":"Ahmaad L","p4":"Sarah B","score1":11,"score2":3},{"date":"2026-06-01","p1":"Brandon F","p2":"Jordanna L","p3":"Devin D","p4":"Giacomo C","score1":11,"score2":2},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Ahmaad L","p3":"Sophia M","p4":"Sarah B","score1":11,"score2":7},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Brandon F","p4":"Giacomo C","score1":11,"score2":9},{"date":"2026-06-01","p1":"Ahmaad L","p2":"Brandon F","p3":"Giacomo C","p4":"Sophia M","score1":11,"score2":7},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Sarah B","p4":"Coach Mitch","score1":11,"score2":8},{"date":"2026-06-01","p1":"Brandon F","p2":"Sophia M","p3":"Giacomo C","p4":"Ahmaad L","score1":11,"score2":1},{"date":"2026-06-01","p1":"Devin D","p2":"Giacomo C","p3":"Ahmaad L","p4":"Sophia M","score1":11,"score2":5},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Jordanna L","p3":"Brandon F","p4":"Sarah B","score1":11,"score2":4},{"date":"2026-06-01","p1":"Devin D","p2":"Sophia M","p3":"Giacomo C","p4":"Ahmaad L","score1":11,"score2":7},{"date":"2026-06-06","p1":"Brian A","p2":"Srisupen A","p3":"Ann Z","p4":"Coach Chase","score1":13,"score2":11},{"date":"2026-06-06","p1":"Brian A","p2":"Ann Z","p3":"Coach Chase","p4":"Srisupen A","score1":12,"score2":10},{"date":"2026-06-06","p1":"Coach Chase","p2":"Ann Z","p3":"Brian A","p4":"Srisupen A","score1":12,"score2":10},{"date":"2026-06-06","p1":"Coach Chase","p2":"Srisupen A","p3":"Ann Z","p4":"Brian A","score1":7,"score2":1}];
-
-function createId() {
-  return crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random());
-}
-function withIds(list) {
-  return list.map((m, idx) => ({...m, id: m.id || `seed-${idx}`}));
-}
+<script>
+const matches = [{"date":"2026-06-01","p1":"Brandon F","p2":"Giacomo C","p3":"Sarah B","p4":"Coach Mitch","score1":11,"score2":3},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Ahmaad L","p4":"Sophia M","score1":11,"score2":3},{"date":"2026-06-01","p1":"Devin D","p2":"Brandon F","p3":"Giacomo C","p4":"Jordanna L","score1":11,"score2":3},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Sophia M","p3":"Ahmaad L","p4":"Sarah B","score1":11,"score2":3},{"date":"2026-06-01","p1":"Brandon F","p2":"Jordanna L","p3":"Devin D","p4":"Giacomo C","score1":11,"score2":2},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Ahmaad L","p3":"Sophia M","p4":"Sarah B","score1":11,"score2":7},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Brandon F","p4":"Giacomo C","score1":11,"score2":9},{"date":"2026-06-01","p1":"Ahmaad L","p2":"Brandon F","p3":"Giacomo C","p4":"Sophia M","score1":11,"score2":7},{"date":"2026-06-01","p1":"Jordanna L","p2":"Devin D","p3":"Sarah B","p4":"Coach Mitch","score1":11,"score2":8},{"date":"2026-06-01","p1":"Brandon F","p2":"Sophia M","p3":"Giacomo C","p4":"Ahmaad L","score1":11,"score2":1},{"date":"2026-06-01","p1":"Devin D","p2":"Giacomo C","p3":"Ahmaad L","p4":"Sophia M","score1":11,"score2":5},{"date":"2026-06-01","p1":"Coach Mitch","p2":"Jordanna L","p3":"Brandon F","p4":"Sarah B","score1":11,"score2":4},{"date":"2026-06-01","p1":"Devin D","p2":"Sophia M","p3":"Giacomo C","p4":"Ahmaad L","score1":11,"score2":7},{"date":"2026-06-06","p1":"Brian A","p2":"Srisupen A","p3":"Ann Z","p4":"Coach Chase","score1":13,"score2":11},{"date":"2026-06-06","p1":"Brian A","p2":"Ann Z","p3":"Coach Chase","p4":"Srisupen A","score1":12,"score2":10},{"date":"2026-06-06","p1":"Coach Chase","p2":"Ann Z","p3":"Brian A","p4":"Srisupen A","score1":12,"score2":10},{"date":"2026-06-06","p1":"Coach Chase","p2":"Srisupen A","p3":"Ann Z","p4":"Brian A","score1":7,"score2":1}];
 function fmtDate(dateString) {
   const [y,m,d] = dateString.split('-').map(Number);
   return new Date(y, m-1, d).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'});
 }
 function cleanName(name) { return (name || '').trim(); }
-function players() {
-  return [...new Set(matches.flatMap(m => [m.p1,m.p2,m.p3,m.p4]).map(cleanName).filter(Boolean))].sort((a,b) => a.localeCompare(b));
-}
 function blankStanding(name) { return {name, points:0, matches:0, wins:0, losses:0, pointDiff:0}; }
 function calculateStandings() {
   const table = new Map();
@@ -308,7 +152,7 @@ function renderKpis() {
     <div class="kpi"><div class="label">Matches Entered</div><div class="value">${matches.length}</div></div>
     <div class="kpi"><div class="label">League Dates</div><div class="value">${days.length}</div></div>
     <div class="kpi"><div class="label">Players</div><div class="value">${standings.length}</div></div>
-    <div class="kpi"><div class="label">Overall Leader</div><div class="value" style="font-size:20px">${top ? '🐐 ' + top.name : '—'}</div></div>`;
+    <div class="kpi"><div class="label">Overall Leader</div><div class="value" style="font-size:20px">${top ? top.name : '—'}</div></div>`;
 }
 function renderStandings() {
   const standings = calculateStandings();
@@ -325,107 +169,17 @@ function renderDaily() {
 function renderMatches() {
   const sorted = [...matches].sort((a,b) => a.date.localeCompare(b.date));
   document.getElementById('matchTable').innerHTML = `
-    <thead><tr><th>Date</th><th>Team 1</th><th>Team 2</th><th>Score</th><th>Winning Team</th><th></th></tr></thead>
+    <thead><tr><th>Date</th><th>Team 1</th><th>Team 2</th><th>Score</th><th>Winning Team</th></tr></thead>
     <tbody>${sorted.map(m => {
       const s1 = Number(m.score1), s2 = Number(m.score2);
       const winner = s1 === s2 ? 'Tie' : s1 > s2 ? `${m.p1} / ${m.p2}` : `${m.p3} / ${m.p4}`;
-      return `<tr><td>${fmtDate(m.date)}</td><td>${m.p1} / ${m.p2}</td><td>${m.p3} / ${m.p4}</td><td><strong>${s1}-${s2}</strong></td><td>${winner}</td><td>${isAdmin ? `<button class="danger" onclick="window.deleteMatch('${m.id}')">Delete</button>` : `<span class="muted">View only</span>`}</td></tr>`;
+      return `<tr><td>${fmtDate(m.date)}</td><td>${m.p1} / ${m.p2}</td><td>${m.p3} / ${m.p4}</td><td><strong>${s1}-${s2}</strong></td><td>${winner}</td></tr>`;
     }).join('')}</tbody>`;
 }
-function renderPlayers() {
-  document.getElementById('players').innerHTML = players().map(p => `<option value="${p.replaceAll('"','&quot;')}"></option>`).join('');
-}
-function renderAll() { renderKpis(); renderPlayers(); renderDaily(); renderStandings(); renderMatches(); }
-
-async function saveMatch(match) {
-  await setDoc(doc(matchesCol, match.id), {...match, updatedAt: serverTimestamp()});
-}
-window.deleteMatch = async function(id) {
-  if (!isAdmin) return alert('Please log in as admin first.');
-  if (!confirm('Delete this match?')) return;
-  await deleteDoc(doc(matchesCol, id));
-};
-async function replaceAllMatches(newMatches) {
-  const existing = await getDocs(matchesCol);
-  let batch = writeBatch(db);
-  let opCount = 0;
-  existing.forEach(d => { batch.delete(d.ref); opCount++; });
-  for (const m of newMatches) {
-    const match = {...m, id: m.id || createId()};
-    batch.set(doc(matchesCol, match.id), {...match, updatedAt: serverTimestamp()});
-    opCount++;
-    if (opCount >= 450) { await batch.commit(); batch = writeBatch(db); opCount = 0; }
-  }
-  if (opCount > 0) await batch.commit();
-}
-async function seedIfEmpty() {
-  const snap = await getDocs(matchesCol);
-  if (snap.empty) await replaceAllMatches(withIds(seedMatches));
-}
-
-setAdminMode(isAdmin);
-document.getElementById('date').valueAsDate = new Date();
-document.querySelector('.mini').textContent = 'Admin tip: entries now save online through Firebase. Everyone will see updated standings from the same GitHub Pages link.';
-document.getElementById('loginBtn').addEventListener('click', () => {
-  const entered = document.getElementById('adminPassword').value;
-  if (entered === ADMIN_PASSWORD) {
-    setAdminMode(true);
-    document.getElementById('adminPassword').value = '';
-    renderMatches();
-  } else {
-    alert('Incorrect password.');
-  }
-});
-document.getElementById('logoutBtn').addEventListener('click', () => { setAdminMode(false); renderMatches(); });
-document.getElementById('matchForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (!isAdmin) return alert('Please log in as admin first.');
-  const m = {
-    id: createId(),
-    date: document.getElementById('date').value,
-    p1: cleanName(document.getElementById('p1').value),
-    p2: cleanName(document.getElementById('p2').value),
-    p3: cleanName(document.getElementById('p3').value),
-    p4: cleanName(document.getElementById('p4').value),
-    score1: Number(document.getElementById('score1').value),
-    score2: Number(document.getElementById('score2').value)
-  };
-  await saveMatch(m);
-  ['p1','p2','p3','p4','score1','score2'].forEach(id => document.getElementById(id).value = '');
-});
-document.getElementById('resetBtn').addEventListener('click', async () => {
-  if (!isAdmin) return alert('Please log in as admin first.');
-  if (confirm('Reset all entries back to the original uploaded spreadsheet data?')) await replaceAllMatches(withIds(seedMatches));
-});
-document.getElementById('exportBtn').addEventListener('click', () => {
-  if (!isAdmin) return alert('Please log in as admin first.');
-  const blob = new Blob([JSON.stringify(matches, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'pickleball-league-backup.json'; a.click();
-  URL.revokeObjectURL(url);
-});
-document.getElementById('importFile').addEventListener('change', async (e) => {
-  if (!isAdmin) return alert('Please log in as admin first.');
-  const file = e.target.files[0];
-  if (!file) return;
-  try {
-    const imported = JSON.parse(await file.text());
-    if (!Array.isArray(imported)) throw new Error('Backup must be a list of matches.');
-    await replaceAllMatches(imported.map((m) => ({...m, id: m.id || createId()})));
-  } catch (err) { alert('Could not import backup: ' + err.message); }
-});
-
-renderAll();
-seedIfEmpty().then(() => {
-  onSnapshot(matchesCol, (snapshot) => {
-    matches = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-    renderAll();
-  }, (error) => {
-    console.error(error);
-    alert('Firebase connection error: ' + error.message);
-  });
-});
+renderKpis();
+renderDaily();
+renderStandings();
+renderMatches();
 </script>
 </body>
 </html>
